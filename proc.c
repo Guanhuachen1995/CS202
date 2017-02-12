@@ -100,6 +100,7 @@ userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
+  p->syscall_count = 0;
 }
 
 // Grow current process's memory by n bytes.
