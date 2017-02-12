@@ -9,4 +9,5 @@
 #define ROOTDEV       1  // device number of file system root disk
 #define MAXARG       32  // max exec arguments
 #define LOGSIZE      10  // max data sectors in on-disk log
+#define INIT_TICKETS 10  // initial number of tickets for each new process
 

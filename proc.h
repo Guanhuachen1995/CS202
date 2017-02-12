@@ -67,6 +67,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int syscall_count;       // Count of the total number of syscalls this process has done
+  int tickets;                 // Number of tickets this procss is holding
 };
 
 // Process memory is laid out contiguously, low addresses first:

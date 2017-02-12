@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "rng.h"
 
 struct {
   struct spinlock lock;
@@ -15,6 +16,7 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
+int total_tickets;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -24,6 +26,8 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  // Seed RNG
+  sgenrand(100000);
 }
 
 //PAGEBREAK: 32
@@ -47,6 +51,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->tickets = INIT_TICKETS;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -101,6 +106,7 @@ userinit(void)
 
   p->state = RUNNABLE;
   p->syscall_count = 0;
+  p->tickets = INIT_TICKETS;
 }
 
 // Grow current process's memory by n bytes.
@@ -259,10 +265,28 @@ void
 scheduler(void)
 {
   struct proc *p;
+  int foundproc = 1;
+  unsigned long randnum;
+  int sum_tickets;
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
+    total_tickets = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+      total_tickets += p->tickets;
+
+    randnum = random_at_most(999999);
+    //cprintf("generated random number: %d\n", randnum);
+
+    if(total_tickets > 0)
+      randnum %= total_tickets;
+    else
+      randnum = 0;
+
+    sum_tickets = 0;
+
+    foundproc = 0;
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
@@ -270,9 +294,15 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+      if(p->tickets + sum_tickets <= randnum){
+        sum_tickets += p->tickets;
+        continue;
+      }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+      foundproc = 1;
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -282,9 +312,10 @@ scheduler(void)
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       proc = 0;
+      //break;
     }
     release(&ptable.lock);
-
+  
   }
 }
 
