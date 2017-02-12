@@ -510,3 +510,14 @@ info(int type)
       break;
   }
 }
+
+int
+settickets(int num)
+{
+  if(num < 0)
+    return -1;
+  acquire(&ptable.lock);
+  proc->tickets = num;
+  release(&ptable.lock);
+  return 0; 
+}
