@@ -88,3 +88,13 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_info(void)
+{
+  int type;
+
+  if(argint(0, &type) < 0)
+    return -1;
+  return info(type);
+}

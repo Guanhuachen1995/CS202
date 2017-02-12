@@ -456,4 +456,25 @@ procdump(void)
   }
 }
 
+int
+info(int type)
+{
+  struct proc *p;
+  int pcount = 0;  
 
+  switch(type){
+    case 1:
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        if(p->state != UNUSED)
+          pcount++;
+      return pcount;
+      break;
+    case 2:
+      return proc->syscall_count;
+      break;
+    default:
+      cprintf("invalid type %d\n", type);
+      return -1;
+      break;
+  }
+}
